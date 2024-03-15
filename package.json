@@ -1,0 +1,32 @@
+{
+  "name": "part9-patientor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "tsc": "tsc",
+    "dev": "ts-node-dev src/index.ts",
+    "lint": "eslint --ext .ts .",
+    "start": "node build/src/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/cors": "^2.8.17",
+    "cors": "^2.8.5",
+    "dayjs": "^1.11.10",
+    "express": "^4.18.2",
+    "uuid": "^9.0.1",
+    "zod": "^3.22.4",
+    "zod-validation-error": "^3.0.3"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.18",
+    "@types/uuid": "^9.0.8",
+    "@typescript-eslint/eslint-plugin": "^6.7.3",
+    "@typescript-eslint/parser": "^6.7.3",
+    "eslint": "^8.50.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.2.2"
+  }
+}
