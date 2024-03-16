@@ -42,7 +42,7 @@ jobs:
   
       - name: Copy Frontend Build to Root
         run: |
-          cp -r frontend/dist .
+          cp -r patientor-frontend/dist .
   
       - name: Check directory after build
         run: ls -la
