@@ -1,2 +1,1 @@
-// export const apiBaseUrl = 'http://localhost:3001/api';
-export const apiBaseUrl = '/api';
+export const apiBaseUrl = process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:3001/api';
