@@ -1,6 +1,8 @@
 # Patientor: a patient record system
 
-![preview](preview.gif)
+[https://patientor.azurewebsites.net/](https://patientor.azurewebsites.net/)
+
+<img src="preview.gif" width="300" alt="preview">
 
 ## Project description
 
