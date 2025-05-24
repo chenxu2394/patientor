@@ -1,23 +1,23 @@
-FROM node:20
+FROM node:20-alpine AS build-env
+WORKDIR /app
 
-WORKDIR /usr/src/app
-
-# Copying the package.json files to the container
 COPY package*.json ./
-
-# Installing the dependencies for the backend
 RUN npm ci
 
-# Copying the rest of the files to the container
 COPY . .
+RUN npm run tsc \
+    && cd patientor-frontend \
+    && npm ci \
+    && npm run build \
+    && cd .. \
+    && npm prune --production
 
-# Transpiling the TypeScript files to JavaScript
-RUN npm run tsc
+FROM gcr.io/distroless/nodejs20-debian12:nonroot AS runtime
+WORKDIR /app
 
-# Building the frontend
-RUN cd patientor-frontend && npm ci && npm run build
+COPY --from=build-env /app/build ./build
+COPY --from=build-env /app/patientor-frontend/dist ./dist
+COPY --from=build-env /app/node_modules ./node_modules
 
-# Copying the frontend build to the root of the project
-RUN cp -r ./patientor-frontend/dist .
-
-CMD ["npm", "start"]
+USER nonroot
+CMD ["build/src/index.js"]
