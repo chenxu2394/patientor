@@ -1,0 +1,124 @@
+name: Deploy Azure
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .dockerignore
+      - .github/workflows/deploy-azure.yml
+      - Dockerfile
+      - data/**
+      - infra/**
+      - package.json
+      - package-lock.json
+      - patientor-frontend/**
+      - src/**
+      - tsconfig.json
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  packages: write
+
+concurrency:
+  group: azure-production-deployment
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: vars.AZURE_BOOTSTRAPPED == 'true' && github.ref_name == vars.AZURE_DEPLOYMENT_BRANCH
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            patientor-frontend/package-lock.json
+
+      - name: Select immutable container image
+        shell: bash
+        run: |
+          repository="$(node --input-type=commonjs -e \
+            'process.stdout.write(require("./infra/deployment.config.json").containerImageRepository)')"
+          echo "CONTAINER_REPOSITORY=${repository}" >> "${GITHUB_ENV}"
+          echo "CONTAINER_IMAGE=${repository}:${GITHUB_SHA}" >> "${GITHUB_ENV}"
+
+      - name: Install backend dependencies
+        run: npm ci
+
+      - name: Install frontend dependencies
+        run: npm ci --prefix patientor-frontend
+
+      - name: Check and build application
+        run: |
+          npm run lint
+          npm run lint --prefix patientor-frontend
+          npm run build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push container image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ env.CONTAINER_IMAGE }}
+            ${{ env.CONTAINER_REPOSITORY }}:latest
+          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Log in to Azure with GitHub OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Preview infrastructure changes
+        uses: azure/bicep-deploy@v2
+        with:
+          type: deployment
+          operation: whatIf
+          name: patientor-v1-what-if
+          scope: resourceGroup
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
+          template-file: ./infra/main.bicep
+          parameters-file: ./infra/main.bicepparam
+          parameters: |
+            containerImage: ${{ env.CONTAINER_IMAGE }}
+
+      - name: Deploy infrastructure
+        id: infrastructure
+        uses: azure/bicep-deploy@v2
+        with:
+          type: deployment
+          operation: create
+          name: patientor-v1
+          scope: resourceGroup
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          resource-group-name: ${{ vars.AZURE_RESOURCE_GROUP }}
+          template-file: ./infra/main.bicep
+          parameters-file: ./infra/main.bicepparam
+          parameters: |
+            containerImage: ${{ env.CONTAINER_IMAGE }}

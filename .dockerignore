@@ -1,0 +1,11 @@
+build
+dist
+node_modules
+npm-debug.log
+.git*
+.eslint*
+*.md
+preview.gif
+docs
+infra
+scripts

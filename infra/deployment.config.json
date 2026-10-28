@@ -1,0 +1,9 @@
+{
+  "location": "eastus2",
+  "bootstrapLocation": "eastus2",
+  "namePrefix": "patientor-v1",
+  "webAppName": "patientor-v1",
+  "appServicePlanSku": "F1",
+  "containerImageRepository": "ghcr.io/chenxu2394/patientor",
+  "initialContainerImageTag": "latest"
+}
