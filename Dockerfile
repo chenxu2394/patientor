@@ -4,12 +4,14 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
+COPY patientor-frontend/package*.json ./patientor-frontend/
+RUN npm ci --prefix patientor-frontend
+
 COPY . .
-RUN npm run tsc \
-    && cd patientor-frontend \
-    && npm ci \
-    && npm run build \
-    && cd .. \
+RUN npm run lint \
+    && npm run lint --prefix patientor-frontend \
+    && npm run tsc \
+    && npm run build --prefix patientor-frontend \
     && npm prune --production
 
 FROM gcr.io/distroless/nodejs24-debian13:nonroot AS runtime
