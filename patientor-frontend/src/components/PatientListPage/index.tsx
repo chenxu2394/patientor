@@ -79,7 +79,17 @@ const PatientListPage = ({ patientsNoSSN, setPatientsNoSSN } : Props ) => {
           Patient list
         </Typography>
       </Box>
-      <Table style={{ marginBottom: "1em" }}>
+      <Table
+        sx={{
+          marginBottom: "1em",
+          "& .MuiTableCell-root": {
+            px: { xs: 0.75, sm: 2 },
+          },
+          "& .MuiRating-root": {
+            fontSize: { xs: "1.25rem", sm: "1.5rem" },
+          },
+        }}
+      >
         <TableHead>
           <TableRow>
             <TableCell>Name</TableCell>
